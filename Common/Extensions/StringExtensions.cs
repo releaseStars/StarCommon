@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Common
+namespace Common.Extensions
 {
     /// <summary>
     /// 字符串扩展方法类
