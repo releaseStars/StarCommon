@@ -1,19 +1,27 @@
-﻿using System;
+﻿using Common.Helpers;
+using System;
 
 namespace YamlHandler
 {
     public class YamlUtility
     {
-        public void ImportYaml(string filePath)
+        public YamlHelper Yaml { get;  }
+
+        public YamlUtility()
         {
-            // Import logic
+            Yaml = new YamlHelper();
         }
 
-        public void ExportYaml(string filePath, object data)
+        public string ImportYaml(string filePath)
         {
-            // Export logic
+            return TextHelper.ImportText(filePath);
         }
 
-        public YamlUtility Create() => new YamlUtility();
+        public void ExportYaml(string filePath, string data)
+        {
+            TextHelper.ExportText(data, filePath, ".yaml");
+        }
+
+        public static YamlUtility Create() => new YamlUtility();
     }
 }

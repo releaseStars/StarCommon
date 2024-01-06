@@ -3,7 +3,7 @@ using YamlDotNet.Serialization;
 
 namespace YamlHandler
 {
-    public static class YamlHelper
+    public class YamlHelper
     {
         /// <summary>
         /// 反序列化
@@ -11,7 +11,7 @@ namespace YamlHandler
         /// <typeparam name="T">反序列化目标</typeparam>
         /// <param name="yaml">内容</param>
         /// <returns></returns>
-        public static T Deserialize<T>(string yaml)
+        public T Deserialize<T>(string yaml)
         {
             var deserializer = new DeserializerBuilder().Build();
             using (var reader = new StringReader(yaml))
@@ -26,7 +26,7 @@ namespace YamlHandler
         /// <typeparam name="T">序列化目标</typeparam>
         /// <param name="obj">内容</param>
         /// <returns></returns>
-        public static string Serialize<T>(T obj)
+        public string Serialize<T>(T obj)
         {
             var serializer = new SerializerBuilder().Build();
             using (var writer = new StringWriter())
