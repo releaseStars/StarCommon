@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -32,6 +33,23 @@ namespace Common.Helpers
         /// <returns></returns>
         public static string ImportText(string filePath) => File.ReadAllText(filePath);
 
+        public static string[] ImportFiles(string directoryPath)
+        {
+            string[] files = Directory.GetFiles(directoryPath);
+            return files
+                .Select(file => File.ReadAllText(file))
+                .ToArray();
+        }
+
+        public static (string, string)[] ImportFilesByTargets(string directoryPath, List<string> targets)
+        {
+            string[] files = Directory.GetFiles(directoryPath);
+            return files
+                .Where(file => targets.Contains(Path.GetFileName(file)))
+                .Select(file => (Path.GetFileName(file), File.ReadAllText(file)))
+                .ToArray();
+        }
+
         /// <summary>
         /// 导入目录下需要导入的文件通过正则匹配
         /// </summary>
@@ -42,7 +60,7 @@ namespace Common.Helpers
             string[] files = Directory.GetFiles(directoryPath);
 
             return files
-                .Where(file => Regex.IsMatch(file, pattern))
+                .Where(file => Regex.IsMatch(Path.GetFileName(file), pattern))
                 .Select(file => File.ReadAllText(file))
                 .ToArray();
         }

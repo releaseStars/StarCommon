@@ -3,7 +3,7 @@ using YamlDotNet.Serialization;
 
 namespace YamlHandler
 {
-    public class YamlHelper
+    internal class YamlHelper
     {
         /// <summary>
         /// 反序列化
