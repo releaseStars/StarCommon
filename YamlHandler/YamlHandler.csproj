@@ -7,7 +7,7 @@
 		<PackageOutputPath>E:\nuget</PackageOutputPath>
 		<AssemblyName>YamlHandler</AssemblyName>
 		<RootNamespace>YamlHandler</RootNamespace>
-		<Version Condition=" '$(VersionSuffix)' == '' ">1.0.0.4</Version>
+		<Version Condition=" '$(VersionSuffix)' == '' ">1.0.2.1</Version>
 		<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeP2POutput</TargetsForTfmSpecificBuildOutput>
 	</PropertyGroup>
 
