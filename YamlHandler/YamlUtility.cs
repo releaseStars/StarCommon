@@ -5,23 +5,15 @@ namespace YamlHandler
 {
     public class YamlUtility
     {
-        public YamlHelper Yaml { get;  }
+        internal YamlHelper Core { get; private set; }
 
-        public YamlUtility()
-        {
-            Yaml = new YamlHelper();
-        }
+        internal YamlUtility() 
+            => Core = new YamlHelper();
 
-        public string ImportYaml(string filePath)
-        {
-            return TextHelper.ImportText(filePath);
-        }
+        public string ImportYaml(string filePath) 
+            => TextHelper.ImportText(filePath);
 
-        public void ExportYaml(string filePath, string data)
-        {
-            TextHelper.ExportText(data, filePath, ".yaml");
-        }
-
-        public static YamlUtility Create() => new YamlUtility();
+        public void ExportYaml(string filePath, string data) 
+            => TextHelper.ExportText(data, filePath, ".yaml");
     }
 }
