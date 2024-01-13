@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Common.Extensions;
 using NPOI.SS.Util;
+using SixLabors.ImageSharp.Processing;
 
 namespace ExcelHandler
 {
@@ -15,13 +16,18 @@ namespace ExcelHandler
         internal void Export<T>(
             IWorkbook workbook,
             string filePath,
-            Dictionary<string, ExcelDto<T>> inputInfo)
+            Dictionary<string, ExcelDto<T>> inputInfo,
+            FileMode fileMode)
             where T : IExcel
         {
             foreach (var infoDic in inputInfo)
             {
                 // 创建工作表
-                ISheet sheet = workbook.CreateSheet(infoDic.Key);
+                ISheet sheet = workbook.GetSheet(infoDic.Key);
+                if (sheet is null)
+                {
+                    sheet = workbook.CreateSheet(infoDic.Key);
+                }
                 var item = infoDic.Value;
                 if (item.Values.Count <= 0)
                 {
@@ -35,12 +41,12 @@ namespace ExcelHandler
                     .Select(it => new ColInfo(it, it.GetCustomAttribute<ExcelColumnAttribute>()))
                     .Where(it => it.Attribute != null)
                     .WhereIf(
-                        item.NotDealPropNames.Count > 0, 
+                        item.NotDealPropNames.Count > 0,
                         it => !item.NotDealPropNames.Contains(it.Property.Name))
                     .ToArray();
 
                 // 新建模型下添加标题
-                if (item.FileMode == FileMode.Create)
+                if (fileMode == FileMode.Create)
                 {
                     SetTitle(sheet, item.Title, colInfos);
                 }
@@ -60,11 +66,11 @@ namespace ExcelHandler
                         }
                     }
                 }
+            }
 
-                using (FileStream fs = new FileStream(filePath, item.FileMode, FileAccess.Write))
-                {
-                    workbook.Write(fs);
-                }
+            using (FileStream fs = new FileStream(filePath, fileMode, FileAccess.Write))
+            {
+                workbook.Write(fs);
             }
         }
 
@@ -79,17 +85,17 @@ namespace ExcelHandler
                     rowNumber,
                     rowNumber,
                     0,
-                    colInfos.Length);
+                    colInfos.Length - 1);
                 sheet.AddMergedRegion(region);
                 // 设置标题
-                row.CreateCell(rowNumber).SetCellValue(rowNumber);
+                row.CreateCell(rowNumber).SetCellValue(title);
 
                 // 更新 row
                 rowNumber += 1;
                 row = sheet.CreateRow(rowNumber);
             }
-             
-            for (int index = 0; index < colInfos.Length; index ++)
+
+            for (int index = 0; index < colInfos.Length; index++)
             {
                 var attr = colInfos[index].Attribute;
                 row.CreateCell(index).SetCellValue(attr.Name);

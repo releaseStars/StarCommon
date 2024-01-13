@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace ExcelHandler.Models
@@ -8,36 +9,27 @@ namespace ExcelHandler.Models
     {
         public ExcelDto(
             List<T> values,
-            FileMode fileMode = FileMode.Create,
             string title = "")
         {
             Values = values ?? new List<T>();
-            FileMode = fileMode;
             Title = title;
             NotDealPropNames = new List<string>();
         }
 
         public ExcelDto(
             List<T> values,
-            FileMode fileMode = FileMode.Create,
-            string title = "",
-            List<string>? notDealPropNames = null)
+            [NotNull]List<string> notDealPropNames,
+            string title = "")
         {
             Values = values ?? new List<T>();
-            FileMode = fileMode;
             Title = title;
-            NotDealPropNames = notDealPropNames ?? new List<string>();
+            NotDealPropNames = notDealPropNames;
         }
 
         /// <summary>
         /// 数据
         /// </summary>
         public List<T> Values { get; private set; }
-
-        /// <summary>
-        /// 操作模式
-        /// </summary>
-        public FileMode FileMode { get; private set; }
 
         /// <summary>
         /// 标题

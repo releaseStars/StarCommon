@@ -10,5 +10,11 @@ namespace ExcelHandler
 
         public ExcelUtility() 
             => Core = new ExcelHelper();
+
+        /// <summary>
+        /// 创建ExcelUtility
+        /// </summary>
+        public static ExcelUtility Create()
+                   => new ExcelUtility();
     }
 }

@@ -15,5 +15,11 @@ namespace YamlHandler
 
         public void ExportYaml(string filePath, string data) 
             => TextHelper.ExportText(data, filePath, ".yaml");
+
+        /// <summary>
+        /// 创建YamlUtility
+        /// </summary>
+        public static YamlUtility Create()
+            => new YamlUtility();
     }
 }

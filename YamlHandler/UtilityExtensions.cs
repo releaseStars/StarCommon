@@ -6,13 +6,6 @@ namespace YamlHandler
 {
     public static class UtilityExtensions
     {
-        /// <summary>
-        /// 创建YamlUtility
-        /// </summary>
-        /// <param name="utility"></param>
-        /// <returns></returns>
-        public static YamlUtility Create(this YamlUtility utility)
-            => new YamlUtility();
 
         /// <summary>
         /// 序列化
