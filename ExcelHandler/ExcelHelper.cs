@@ -7,7 +7,10 @@ using System.Linq;
 using System.Reflection;
 using Common.Extensions;
 using NPOI.SS.Util;
-using SixLabors.ImageSharp.Processing;
+using NPOI.HSSF.UserModel;
+using System;
+using System.Threading.Tasks;
+using NPOI.POIFS.Crypt.Dsig;
 
 namespace ExcelHandler
 {
@@ -16,18 +19,13 @@ namespace ExcelHandler
         internal void Export<T>(
             IWorkbook workbook,
             string filePath,
-            Dictionary<string, ExcelDto<T>> inputInfo,
-            FileMode fileMode)
+            Dictionary<string, ExcelDto<T>> inputInfo)
             where T : IExcel
         {
             foreach (var infoDic in inputInfo)
             {
                 // 创建工作表
-                ISheet sheet = workbook.GetSheet(infoDic.Key);
-                if (sheet is null)
-                {
-                    sheet = workbook.CreateSheet(infoDic.Key);
-                }
+                ISheet sheet = workbook.CreateSheet(infoDic.Key);
                 var item = infoDic.Value;
                 if (item.Values.Count <= 0)
                 {
@@ -45,16 +43,21 @@ namespace ExcelHandler
                         it => !item.NotDealPropNames.Contains(it.Property.Name))
                     .ToArray();
 
-                // 新建模型下添加标题
-                if (fileMode == FileMode.Create)
-                {
-                    SetTitle(sheet, item.Title, colInfos);
-                }
+                SetTitle(sheet, item.Title, colInfos);
 
                 // 写入数据
                 var rowNumber = sheet.LastRowNum + 1;
                 foreach (var data in item.Values)
                 {
+                    if (rowNumber >= 65536 && workbook is HSSFWorkbook)
+                    {
+                        DateTime currentTime = DateTime.Now;
+                        string timestamp = ((DateTimeOffset)currentTime).ToUnixTimeMilliseconds().ToString();
+                        sheet = workbook.CreateSheet(infoDic.Key + timestamp);
+                        SetTitle(sheet, item.Title, colInfos);
+                        rowNumber = sheet.LastRowNum + 1;
+                    }
+
                     IRow row = sheet.CreateRow(rowNumber++);
                     for (int colNumber = 0; colNumber < colInfos.Length; colNumber++)
                     {
@@ -68,12 +71,84 @@ namespace ExcelHandler
                 }
             }
 
-            using (FileStream fs = new FileStream(filePath, fileMode, FileAccess.Write))
+            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 workbook.Write(fs);
             }
         }
 
+        internal void ExportV2<T>(
+            IWorkbook workbook,
+            string filePath,
+            Dictionary<string, ExcelDto<T>> inputInfo)
+            where T : IExcel
+        {
+            foreach (var infoDic in inputInfo)
+            {
+                // 创建工作表
+                ISheet sheet = workbook.CreateSheet(infoDic.Key);
+                var item = infoDic.Value;
+                if (item.Values.Count <= 0)
+                {
+                    continue;
+                }
+
+                // 获取处理列表
+                var colInfos = item.Values.First()
+                    .GetType()
+                    .GetProperties()
+                    .Select(it => new ColInfo(it, it.GetCustomAttribute<ExcelColumnAttribute>()))
+                    .Where(it => it.Attribute != null)
+                    .WhereIf(
+                        item.NotDealPropNames.Count > 0,
+                        it => !item.NotDealPropNames.Contains(it.Property.Name))
+                    .ToArray();
+
+                SetTitle(sheet, item.Title, colInfos);
+
+                // 用来计算偏移数据
+                int offset = sheet.LastRowNum;
+                int taskDealCount = 10000;
+                List<List<T>> dealData = item.Values.SplitList(taskDealCount);
+                // 使用多线程并行打印拆分后的结果
+                Parallel.ForEach(dealData, (chunk, state, index) =>
+                {
+                    int idx = (int)(index + 1); 
+                    int end = idx * taskDealCount;
+                    int begin = end - taskDealCount + 1;
+                    for (int tempRowNumber = begin; tempRowNumber <= end; tempRowNumber++)
+                    {
+                        IRow row;
+                        lock (this)
+                        {
+                            row = sheet.CreateRow(tempRowNumber);
+                        }
+                        T rowData = chunk[tempRowNumber - begin];
+                        for (int colNumber = 0; colNumber < colInfos.Length; colNumber++)
+                        {
+                            var property = colInfos[colNumber].Property;
+                            object obj = property.GetValue(rowData, null);
+                            if (obj != null)
+                            {
+                                row.CreateCell(colNumber).SetCellValue(obj.ToString());
+                            }
+                        }
+                    }
+                });
+            }
+
+            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            {
+                workbook.Write(fs);
+            }
+        }
+
+        #region Private
+
+        /// <summary>
+        /// 设置标题
+        /// </summary>
+        /// <param name="title">抬头</param>
         private void SetTitle(ISheet sheet, string title, ColInfo[] colInfos)
         {
             int rowNumber = 0;
@@ -111,5 +186,9 @@ namespace ExcelHandler
                 }
             }
         }
+
+        #endregion
+
+
     }
 }
