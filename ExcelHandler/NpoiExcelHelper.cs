@@ -9,12 +9,10 @@ using Common.Extensions;
 using NPOI.SS.Util;
 using NPOI.HSSF.UserModel;
 using System;
-using System.Threading.Tasks;
-using NPOI.POIFS.Crypt.Dsig;
 
 namespace ExcelHandler
 {
-    internal class ExcelHelper
+    internal class NpoiExcelHelper
     {
         internal void Export<T>(
             IWorkbook workbook,
@@ -75,72 +73,7 @@ namespace ExcelHandler
             {
                 workbook.Write(fs);
             }
-        }
-
-        internal void ExportV2<T>(
-            IWorkbook workbook,
-            string filePath,
-            Dictionary<string, ExcelDto<T>> inputInfo)
-            where T : IExcel
-        {
-            foreach (var infoDic in inputInfo)
-            {
-                // 创建工作表
-                ISheet sheet = workbook.CreateSheet(infoDic.Key);
-                var item = infoDic.Value;
-                if (item.Values.Count <= 0)
-                {
-                    continue;
-                }
-
-                // 获取处理列表
-                var colInfos = item.Values.First()
-                    .GetType()
-                    .GetProperties()
-                    .Select(it => new ColInfo(it, it.GetCustomAttribute<ExcelColumnAttribute>()))
-                    .Where(it => it.Attribute != null)
-                    .WhereIf(
-                        item.NotDealPropNames.Count > 0,
-                        it => !item.NotDealPropNames.Contains(it.Property.Name))
-                    .ToArray();
-
-                SetTitle(sheet, item.Title, colInfos);
-
-                // 用来计算偏移数据
-                int offset = sheet.LastRowNum;
-                int taskDealCount = 10000;
-                List<List<T>> dealData = item.Values.SplitList(taskDealCount);
-                // 使用多线程并行打印拆分后的结果
-                Parallel.ForEach(dealData, (chunk, state, index) =>
-                {
-                    int idx = (int)(index + 1); 
-                    int end = idx * taskDealCount;
-                    int begin = end - taskDealCount + 1;
-                    for (int tempRowNumber = begin; tempRowNumber <= end; tempRowNumber++)
-                    {
-                        IRow row;
-                        lock (this)
-                        {
-                            row = sheet.CreateRow(tempRowNumber);
-                        }
-                        T rowData = chunk[tempRowNumber - begin];
-                        for (int colNumber = 0; colNumber < colInfos.Length; colNumber++)
-                        {
-                            var property = colInfos[colNumber].Property;
-                            object obj = property.GetValue(rowData, null);
-                            if (obj != null)
-                            {
-                                row.CreateCell(colNumber).SetCellValue(obj.ToString());
-                            }
-                        }
-                    }
-                });
-            }
-
-            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            {
-                workbook.Write(fs);
-            }
+            workbook.Close();
         }
 
         #region Private

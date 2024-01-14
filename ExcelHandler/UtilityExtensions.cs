@@ -16,7 +16,7 @@ namespace ExcelHandler
             string filePath,
             Dictionary<string, ExcelDto<T>> data)
             where T : IExcel
-            => utility.Core.Export(
+            => utility.NpoiCore.Export(
                 new HSSFWorkbook(),
                 Path.ChangeExtension(filePath, "xls"),
                 data);
@@ -29,7 +29,7 @@ namespace ExcelHandler
             string filePath,
             Dictionary<string, ExcelDto<T>> data)
             where T : IExcel
-            => utility.Core.Export(
+            => utility.NpoiCore.Export(
                 new XSSFWorkbook(),
                 Path.ChangeExtension(filePath, "xlsx"),
                 data);
@@ -39,7 +39,7 @@ namespace ExcelHandler
             string filePath,
             Dictionary<string, ExcelDto<T>> data)
             where T : IExcel
-            => utility.Core.ExportV2(
+            => utility.NpoiCore.ExportV2(
                 new XSSFWorkbook(),
                 Path.ChangeExtension(filePath, "xlsx"),
                 data);

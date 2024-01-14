@@ -6,10 +6,10 @@ namespace ExcelHandler
 {
     public class ExcelUtility
     {
-        internal ExcelHelper Core { get; private set; }
+        internal NpoiExcelHelper NpoiCore { get; private set; }
 
         public ExcelUtility() 
-            => Core = new ExcelHelper();
+            => NpoiCore = new NpoiExcelHelper();
 
         /// <summary>
         /// 创建ExcelUtility
